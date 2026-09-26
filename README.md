@@ -13,35 +13,11 @@ tags:
 
 This model classifies JAMB (Joint Admissions and Matriculation Board) scores into three tiers: 'Low', 'Average', and 'High'. It is trained on features such as study hours, attendance rate, teacher quality, etc.
 
-## 🚀 Live Demo & Web App
+## 🚀 Live Demo
 
-- **Interactive Web App**: [https://jamb-score-classifier-ipynb.onrender.com/](https://jamb-score-classifier-ipynb.onrender.com/)
-- **API Documentation (Swagger UI)**: [https://jamb-score-classifier-ipynb.onrender.com/docs](https://jamb-score-classifier-ipynb.onrender.com/docs)
-- **Prediction Endpoint (POST)**: `https://jamb-score-classifier-ipynb.onrender.com/predict`
+Experience the model in action through the interactive web application:
+👉 **[JAMB Score Tier Predictor Live App](https://jamb-score-classifier-ipynb.onrender.com/)**
 
-
-### Example API Request (cURL)
-```bash
-curl -X POST "https://jamb-score-classifier-ipynb.onrender.com/predict" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "Study_Hours_Per_Week": 15.0,
-       "Attendance_Rate": 85.0,
-       "Teacher_Quality": 4.0,
-       "Distance_To_School": 5.0,
-       "Age": 17.0,
-       "Assignments_Completed": 9.0,
-       "School_Type": "Public",
-       "School_Location": "Urban",
-       "Extra_Tutorials": "Yes",
-       "Access_To_Learning_Materials": "Yes",
-       "Gender": "Female",
-       "Parent_Involvement": "High",
-       "IT_Knowledge": "Medium",
-       "Socioeconomic_Status": "Middle",
-       "Parent_Education_Level": "Tertiary"
-     }'
-```
 
 
 
