@@ -36,7 +36,7 @@ try:
 except Exception as e:
     print(f"Initial model load warning: {e}")
 
-# Define the input data structure matching the exact training features and order
+# Define the input data structure matching the exact training features and categories
 class PredictionInput(BaseModel):
     Study_Hours_Per_Week: float = Field(default=15.0, description="Average study hours per week")
     Attendance_Rate: float = Field(default=85.0, description="Class attendance rate (0 to 100%)")
@@ -51,8 +51,8 @@ class PredictionInput(BaseModel):
     Gender: Literal["Female", "Male"] = Field(default="Female", description="Gender of the student")
     Parent_Involvement: Literal["Low", "Medium", "High"] = Field(default="High", description="Level of parental involvement")
     IT_Knowledge: Literal["Low", "Medium", "High"] = Field(default="Medium", description="Student's IT/digital literacy level")
-    Socioeconomic_Status: Literal["Low", "Middle", "High"] = Field(default="Middle", description="Family socioeconomic background")
-    Parent_Education_Level: Literal["None", "Primary", "Secondary", "Tertiary"] = Field(default="Tertiary", description="Highest education level attained by parents")
+    Socioeconomic_Status: Literal["Low", "Medium", "High", "Middle"] = Field(default="Medium", description="Family socioeconomic background")
+    Parent_Education_Level: Literal["Primary", "Secondary", "Tertiary"] = Field(default="Tertiary", description="Highest education level attained by parents")
 
     model_config = {
         "json_schema_extra": {
@@ -70,7 +70,7 @@ class PredictionInput(BaseModel):
                 "Gender": "Female",
                 "Parent_Involvement": "High",
                 "IT_Knowledge": "Medium",
-                "Socioeconomic_Status": "Middle",
+                "Socioeconomic_Status": "Medium",
                 "Parent_Education_Level": "Tertiary"
             }
         }
@@ -482,7 +482,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     <div class="form-group">
                         <label for="Socioeconomic_Status">Socioeconomic Status</label>
                         <select id="Socioeconomic_Status" name="Socioeconomic_Status" required>
-                            <option value="Middle" selected>Middle</option>
+                            <option value="Medium" selected>Medium</option>
                             <option value="High">High</option>
                             <option value="Low">Low</option>
                         </select>
@@ -493,7 +493,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                             <option value="Tertiary" selected>Tertiary</option>
                             <option value="Secondary">Secondary</option>
                             <option value="Primary">Primary</option>
-                            <option value="None">None</option>
                         </select>
                     </div>
                 </div>
@@ -610,6 +609,10 @@ async def predict_tier(data: PredictionInput):
     try:
         # Convert input data to dictionary
         input_data = data.model_dump() if hasattr(data, 'model_dump') else data.dict()
+
+        # Map common aliases to model categories
+        if input_data.get("Socioeconomic_Status") == "Middle":
+            input_data["Socioeconomic_Status"] = "Medium"
 
         # Ensure exact column order matching model training pipeline
         expected_columns = [
