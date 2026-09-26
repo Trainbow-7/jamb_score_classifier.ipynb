@@ -1,11 +1,12 @@
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Literal
 import joblib
 import pandas as pd
 import os
+import traceback
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -23,25 +24,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load the trained model
-MODEL_PATH = "jamb_tier_classifier.joblib"
-model = None
-if os.path.exists(MODEL_PATH):
-    model = joblib.load(MODEL_PATH)
+# Define path to model file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "jamb_tier_classifier.joblib")
 
-# Define the input data structure with Pydantic for validation & documentation
+# Load model safely
+model = None
+try:
+    if os.path.exists(MODEL_PATH):
+        model = joblib.load(MODEL_PATH)
+except Exception as e:
+    print(f"Initial model load warning: {e}")
+
+# Define the input data structure matching the exact training features and order
 class PredictionInput(BaseModel):
-    Age: float = Field(default=17.0, description="Age of the student (years)")
-    Gender: Literal["Male", "Female"] = Field(default="Female", description="Gender of the student")
     Study_Hours_Per_Week: float = Field(default=15.0, description="Average study hours per week")
     Attendance_Rate: float = Field(default=85.0, description="Class attendance rate (0 to 100%)")
+    Teacher_Quality: float = Field(default=4.0, description="Teacher quality rating (1 to 5)")
+    Distance_To_School: float = Field(default=5.0, description="Distance from residence to school (in km)")
+    Age: float = Field(default=17.0, description="Age of the student (years)")
     Assignments_Completed: float = Field(default=8.0, description="Number of assignments completed")
     School_Type: Literal["Public", "Private"] = Field(default="Public", description="School governance type")
     School_Location: Literal["Urban", "Rural"] = Field(default="Urban", description="School location")
-    Teacher_Quality: float = Field(default=4.0, description="Teacher quality rating (1 to 5)")
-    Distance_To_School: float = Field(default=5.0, description="Distance from residence to school (in km)")
     Extra_Tutorials: Literal["Yes", "No"] = Field(default="Yes", description="Attending extra tutorials or coaching")
     Access_To_Learning_Materials: Literal["Yes", "No"] = Field(default="Yes", description="Access to textbooks & online resources")
+    Gender: Literal["Female", "Male"] = Field(default="Female", description="Gender of the student")
     Parent_Involvement: Literal["Low", "Medium", "High"] = Field(default="High", description="Level of parental involvement")
     IT_Knowledge: Literal["Low", "Medium", "High"] = Field(default="Medium", description="Student's IT/digital literacy level")
     Socioeconomic_Status: Literal["Low", "Middle", "High"] = Field(default="Middle", description="Family socioeconomic background")
@@ -50,17 +57,17 @@ class PredictionInput(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "Age": 17.0,
-                "Gender": "Female",
                 "Study_Hours_Per_Week": 15.0,
                 "Attendance_Rate": 85.0,
+                "Teacher_Quality": 4.0,
+                "Distance_To_School": 5.0,
+                "Age": 17.0,
                 "Assignments_Completed": 8.0,
                 "School_Type": "Public",
                 "School_Location": "Urban",
-                "Teacher_Quality": 4.0,
-                "Distance_To_School": 5.0,
                 "Extra_Tutorials": "Yes",
                 "Access_To_Learning_Materials": "Yes",
+                "Gender": "Female",
                 "Parent_Involvement": "High",
                 "IT_Knowledge": "Medium",
                 "Socioeconomic_Status": "Middle",
@@ -533,21 +540,21 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             submitBtn.disabled = true;
 
             const payload = {
-                Age: parseFloat(document.getElementById('Age').value),
-                Gender: document.getElementById('Gender').value,
                 Study_Hours_Per_Week: parseFloat(document.getElementById('Study_Hours_Per_Week').value),
                 Attendance_Rate: parseFloat(document.getElementById('Attendance_Rate').value),
+                Teacher_Quality: parseFloat(document.getElementById('Teacher_Quality').value),
+                Distance_To_School: parseFloat(document.getElementById('Distance_To_School').value),
+                Age: parseFloat(document.getElementById('Age').value),
                 Assignments_Completed: parseFloat(document.getElementById('Assignments_Completed').value),
                 School_Type: document.getElementById('School_Type').value,
                 School_Location: document.getElementById('School_Location').value,
-                Teacher_Quality: parseFloat(document.getElementById('Teacher_Quality').value),
-                Distance_To_School: parseFloat(document.getElementById('Distance_To_School').value),
                 Extra_Tutorials: document.getElementById('Extra_Tutorials').value,
                 Access_To_Learning_Materials: document.getElementById('Access_To_Learning_Materials').value,
+                Gender: document.getElementById('Gender').value,
                 Parent_Involvement: document.getElementById('Parent_Involvement').value,
                 IT_Knowledge: document.getElementById('IT_Knowledge').value,
                 Socioeconomic_Status: document.getElementById('Socioeconomic_Status').value,
-                Parent_Education_Level: document.getElementById('Parent_Education_Level').value,
+                Parent_Education_Level: document.getElementById('Parent_Education_Level').value
             };
 
             try {
@@ -557,13 +564,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     body: JSON.stringify(payload)
                 });
 
-                if (!response.ok) {
-                    throw new Error('Server returned ' + response.status);
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || ('Server returned status ' + response.status));
                 }
 
-                const data = await response.json();
                 const tier = data.predicted_tier;
-
                 tierBadge.textContent = tier + ' Tier';
                 tierBadge.className = 'result-badge tier-' + tier;
                 tierDescription.textContent = descriptions[tier] || 'Model prediction completed successfully.';
@@ -571,7 +578,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 resultContainer.style.display = 'block';
                 resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             } catch (err) {
-                alert('Prediction request failed. Please verify the API is running.');
+                alert('Prediction failed: ' + err.message);
                 console.error(err);
             } finally {
                 btnText.textContent = 'Predict Performance Tier';
@@ -590,13 +597,45 @@ async def serve_home():
 
 @app.post("/predict", tags=["Prediction"])
 async def predict_tier(data: PredictionInput):
-    # Convert input data to pandas DataFrame
-    input_df = pd.DataFrame([data.model_dump() if hasattr(data, 'model_dump') else data.dict()])
-
+    global model
     if model is None:
-        return {"error": "Model file not found on server"}
+        if os.path.exists(MODEL_PATH):
+            try:
+                model = joblib.load(MODEL_PATH)
+            except Exception as e:
+                return JSONResponse(status_code=500, content={"error": f"Failed to load model file: {str(e)}"})
+        else:
+            return JSONResponse(status_code=500, content={"error": "Model file jamb_tier_classifier.joblib not found on server"})
 
-    # Make prediction
-    prediction = model.predict(input_df)[0]
+    try:
+        # Convert input data to dictionary
+        input_data = data.model_dump() if hasattr(data, 'model_dump') else data.dict()
 
-    return {"predicted_tier": str(prediction)}
+        # Ensure exact column order matching model training pipeline
+        expected_columns = [
+            "Study_Hours_Per_Week",
+            "Attendance_Rate",
+            "Teacher_Quality",
+            "Distance_To_School",
+            "Age",
+            "Assignments_Completed",
+            "School_Type",
+            "School_Location",
+            "Extra_Tutorials",
+            "Access_To_Learning_Materials",
+            "Gender",
+            "Parent_Involvement",
+            "IT_Knowledge",
+            "Socioeconomic_Status",
+            "Parent_Education_Level"
+        ]
+
+        input_df = pd.DataFrame([input_data])[expected_columns]
+
+        # Make prediction
+        prediction = model.predict(input_df)[0]
+        return {"predicted_tier": str(prediction)}
+    except Exception as e:
+        error_details = traceback.format_exc()
+        print(f"Prediction error: {error_details}")
+        return JSONResponse(status_code=500, content={"error": f"Model inference error: {str(e)}"})
