@@ -13,6 +13,12 @@ tags:
 
 This model classifies JAMB (Joint Admissions and Matriculation Board) scores into three tiers: 'Low', 'Average', and 'High'. It is trained on features such as study hours, attendance rate, teacher quality, etc.
 
+## 🚀 Live Demo & API
+
+- **Live Prediction Endpoint**: [https://jamb-score-classifier-ipynb.onrender.com/predict](https://jamb-score-classifier-ipynb.onrender.com/predict)
+- **API Documentation (Swagger UI)**: [https://jamb-score-classifier-ipynb.onrender.com/docs](https://jamb-score-classifier-ipynb.onrender.com/docs)
+
+
 ## Model Details
 
 - **Model Name**: Gradient Boosting
