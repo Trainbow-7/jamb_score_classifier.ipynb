@@ -13,12 +13,12 @@ tags:
 
 This model classifies JAMB (Joint Admissions and Matriculation Board) scores into three tiers: 'Low', 'Average', and 'High'. It is trained on features such as study hours, attendance rate, teacher quality, etc.
 
-## 🚀 Interactive Live Demo & API
+## 🚀 Live Demo & Web App
 
-- **Interactive Swagger UI (Try it Live)**: [https://jamb-score-classifier-ipynb.onrender.com/docs](https://jamb-score-classifier-ipynb.onrender.com/docs)
+- **Interactive Web App**: [https://jamb-score-classifier-ipynb.onrender.com/](https://jamb-score-classifier-ipynb.onrender.com/)
+- **API Documentation (Swagger UI)**: [https://jamb-score-classifier-ipynb.onrender.com/docs](https://jamb-score-classifier-ipynb.onrender.com/docs)
 - **Prediction Endpoint (POST)**: `https://jamb-score-classifier-ipynb.onrender.com/predict`
 
-> **Note**: To test predictions in the browser, open the **[Swagger UI link above](https://jamb-score-classifier-ipynb.onrender.com/docs)**, expand the **`POST /predict`** endpoint, click **"Try it out"**, and hit **"Execute"**. (Opening `/predict` directly in a browser sends a `GET` request which will show `Method Not Allowed`).
 
 ### Example API Request (cURL)
 ```bash
