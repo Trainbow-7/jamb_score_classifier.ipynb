@@ -13,10 +13,36 @@ tags:
 
 This model classifies JAMB (Joint Admissions and Matriculation Board) scores into three tiers: 'Low', 'Average', and 'High'. It is trained on features such as study hours, attendance rate, teacher quality, etc.
 
-## 🚀 Live Demo & API
+## 🚀 Interactive Live Demo & API
 
-- **Live Prediction Endpoint**: [https://jamb-score-classifier-ipynb.onrender.com/predict](https://jamb-score-classifier-ipynb.onrender.com/predict)
-- **API Documentation (Swagger UI)**: [https://jamb-score-classifier-ipynb.onrender.com/docs](https://jamb-score-classifier-ipynb.onrender.com/docs)
+- **Interactive Swagger UI (Try it Live)**: [https://jamb-score-classifier-ipynb.onrender.com/docs](https://jamb-score-classifier-ipynb.onrender.com/docs)
+- **Prediction Endpoint (POST)**: `https://jamb-score-classifier-ipynb.onrender.com/predict`
+
+> **Note**: To test predictions in the browser, open the **[Swagger UI link above](https://jamb-score-classifier-ipynb.onrender.com/docs)**, expand the **`POST /predict`** endpoint, click **"Try it out"**, and hit **"Execute"**. (Opening `/predict` directly in a browser sends a `GET` request which will show `Method Not Allowed`).
+
+### Example API Request (cURL)
+```bash
+curl -X POST "https://jamb-score-classifier-ipynb.onrender.com/predict" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "Study_Hours_Per_Week": 15.0,
+       "Attendance_Rate": 85.0,
+       "Teacher_Quality": 4.0,
+       "Distance_To_School": 5.0,
+       "Age": 17.0,
+       "Assignments_Completed": 9.0,
+       "School_Type": "Public",
+       "School_Location": "Urban",
+       "Extra_Tutorials": "Yes",
+       "Access_To_Learning_Materials": "Yes",
+       "Gender": "Female",
+       "Parent_Involvement": "High",
+       "IT_Knowledge": "Medium",
+       "Socioeconomic_Status": "Middle",
+       "Parent_Education_Level": "Tertiary"
+     }'
+```
+
 
 
 ## Model Details
